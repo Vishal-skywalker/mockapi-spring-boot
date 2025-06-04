@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" >
+<head >
+    <title th:text="${resource.name}">Edit Resource</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .GET {color: green;}
+        .POST {color: blue;}
+        .PUT {color: orange;}
+        .DELETE {color: red;}
+        .PATCH {color: purple;}
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.copy').forEach(function(header) {
+                header.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    navigator.clipboard.writeText(window.location.origin + url).then(() => {
+                    }).catch(err => {
+                        console.error('Failed to copy URL: ', err);
+                    });
+                });
+            });
+        });
+    </script>
+</head>
+<body class="container py-5">
+
+    <h3 th:text="${resource.name}"></h3>
+
+    <!-- Resource Update Form -->
+    <form th:object="${resource}" method="post" class="mb-5">
+        <div class="mb-3">
+            <label for="name" class="form-label">Resource Name</label>
+            <input type="text" th:field="*{name}" class="form-control" id="name" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea th:field="*{description}" class="form-control" id="description" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" th:field="*{requireAuthentication}" class="form-check-input" id="authRequired">
+            <label class="form-check-label" for="authRequired">Require Authentication</label>
+        </div>
+
+        <div class="mb-3">
+            <label for="apiKey" class="form-label">API Key</label>
+            <input type="text" th:field="*{apiKey}" class="form-control" id="apiKey">
+        </div>
+
+        <input type="hidden" th:field="*{uuid}" />
+        <div class="d-flex gap-3 justify-content-end">
+            <button type="submit" class="btn btn-outline-primary" th:formaction="@{/resource/{uuid}(uuid=${resource.uuid})}">Update Resource</button>
+            <button type="submit" class="btn btn-outline-danger" th:formaction="@{/resource/{uuid}/delete(uuid=${resource.uuid})}">Delete Resource</button>
+            <button type="submit" class="btn btn-outline-success" th:formaction="@{/resource/{uuid}/path/new(uuid=${resource.uuid})}">New Path</button>
+        </div>
+    </form>
+
+    <!-- Paths as Cards -->
+    <h5>Paths</h5>
+    <div class="row row-cols-1 g-4">
+        <div class="col" th:each="path : ${resource.paths}">
+            <div class="card shadow-sm" th:id="'path-' + ${path.id}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-start align-items-center gap-2">
+                        <span class="fw-bold"
+                              th:text="${path.method}"
+                              th:classappend="${path.method}">
+                        </span>
+                        <span th:text="${path.pathName}" class="fw-bold"></span>
+                    </div>
+                    <a class="copy link-underline link-underline-opacity-0" th:data-url="@{/api/{uuid}{pathName}(uuid=${resource.uuid}, pathName=${path.pathName})}" title="Click to copy URL" style="cursor: pointer;">Copy Request URL</a>
+                </div>
+                <form method="post">
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label">Path name</label>
+                                <input type="text" name="pathName" th:value="${path.pathName}" class="form-control" required>
+                            </div>
+                            <div class="col">
+                                <label class="form-label">HTTP Method</label>
+                                <select name="method" class="form-select" required >
+                                    <option th:value="GET" th:selected="${path.method} == 'GET'">GET</option>
+                                    <option th:value="POST" th:selected="${path.method} == 'POST'">POST</option>
+                                    <option th:value="PUT" th:selected="${path.method} == 'PUT'">PUT</option>
+                                    <option th:value="DELETE" th:selected="${path.method} == 'DELETE'">DELETE</option>
+                                    <option th:value="PATCH" th:selected="${path.method} == 'PATCH'">PATCH</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label">Status Code</label>
+                                <input type="number" name="statusCode" th:value="${path.statusCode}" class="form-control" required max="599" min="100">
+                            </div>
+    
+                            <div class="col">
+                                <label class="form-label">Content Type</label>
+                                <select name="contentType" class="form-select" required>
+                                    <option value="application/json" th:selected="${path.contentType} == 'application/json'">application/json</option>
+                                    <option value="application/xml" th:selected="${path.contentType} == 'application/xml'">application/xml</option>
+                                    <option value="text/plain" th:selected="${path.contentType} == 'text/plain'">text/plain</option>
+                                    <option value="text/html" th:selected="${path.contentType} == 'text/html'">text/html</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Response Body</label>
+                            <textarea name="responseBody" class="form-control" rows="4" th:text="${path.responseBody}"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-3 justify-content-end">
+                            <button type="submit" class="btn btn-outline-primary" th:formaction="@{/resource/{uuid}/path/{id}(uuid=${resource.uuid}, id=${path.id})}">Update Path</button>
+                            <button type="submit" class="btn btn-outline-danger" th:formaction="@{/resource/{uuid}/path/{id}/delete(uuid=${resource.uuid}, id=${path.id})}">Delete Path</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
