@@ -14,22 +14,30 @@
         <div class="row d-flex justify-content-center align-items-center min-vh-100">
             <div class="col-10 col-md-6 col-lg-4">
                 <form id="loginForm" th:action="@{/login}" method="post">
-                    <h1 class="text-center">Login</h1>
+                    <h1 class="text-center">
+                        <img th:src="@{/img/MockAPI.png}" style="height: 80px;" alt="Logo">
+                    </h1>
+                    <div th:if="${message != null}">
+                        <div class="alert alert-success" th:text="${message}">Message</div>
+                    </div>
                     <div class="mb-3">
                         <label for="username" class="form-label">Email</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter your email">
+                        <input type="text" class="form-control" id="username" name="username"
+                            placeholder="Enter your email">
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password">
+                        <input type="password" class="form-control" id="password" name="password"
+                            placeholder="Enter your password">
                     </div>
-                    <div class="text-start">
+                    <div class="text-end mb-3">
+                        <a th:href="@{/forgot-password}">Forgot Password</a>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a th:href="@{/register}">Sign up?</a>
                         <input type="submit" class="btn btn-primary" id="submit" value="Login">
                     </div>
                 </form>
-                <div class="text-end mt-3">
-                    <a th:href="@{/register}" >Do not have an account? Sign up here.</a>
-                </div>
             </div>
         </div>
     </div>

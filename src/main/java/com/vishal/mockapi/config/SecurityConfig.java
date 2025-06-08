@@ -1,4 +1,4 @@
-package com.vishal.mockapi.security;
+package com.vishal.mockapi.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +48,10 @@ public class SecurityConfig {
 
                 })
                 .authorizeHttpRequests(register -> {
-                    register.requestMatchers("/register", "/validateUser", "/js/*", "/css/*", "/error", "/favicon.ico",
+                    register.requestMatchers("/register", "/validateUser",
+                            "/js/*", "/img/*",
+                            "/css/*", "/error",
+                            "/forgot-password", "reset-password", "/favicon.ico",
                             "/login", "/api/**").permitAll();
                     register.requestMatchers("/admin").hasAuthority("ADMIN");
                     register.anyRequest().authenticated();
@@ -62,4 +65,21 @@ public class SecurityConfig {
                 .build();
     }
 
+    // @Bean
+    // public JavaMailSender getJavaMailSender() {
+    // JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+    // mailSender.setHost("smtp.gmail.com");
+    // mailSender.setPort(587);
+    //
+    // mailSender.setUsername("useme8583@gmail.com");
+    // mailSender.setPassword("icvr ablu cqvk hpbr");
+    //
+    // Properties props = mailSender.getJavaMailProperties();
+    // props.put("mail.transport.protocol", "smtp");
+    // props.put("mail.smtp.auth", "true");
+    // props.put("mail.smtp.starttls.enable", "true");
+    // props.put("mail.debug", "true");
+    //
+    // return mailSender;
+    // }
 }

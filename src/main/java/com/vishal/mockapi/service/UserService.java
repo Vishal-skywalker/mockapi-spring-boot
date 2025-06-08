@@ -6,7 +6,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.vishal.mockapi.entity.ResetPasswordToken;
 import com.vishal.mockapi.entity.UserEntity;
+import com.vishal.mockapi.repository.ResetPasswordTokenRepo;
 import com.vishal.mockapi.repository.UserRepo;
 
 @Service
@@ -16,6 +18,9 @@ public class UserService {
 
     @Autowired
     public PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ResetPasswordTokenRepo resetPasswordTokenRepo;
 
     public boolean registerUser(UserEntity userEntity) {
         try {
@@ -67,5 +72,12 @@ public class UserService {
 
     public Iterable<UserEntity> getAll() {
         return userRepo.findAll();
+    }
+
+    public String generatePasswordResetToken(UserEntity user) {
+        ResetPasswordToken resetPasswordToken = new ResetPasswordToken();
+        resetPasswordToken.setUser(user);
+        resetPasswordTokenRepo.save(resetPasswordToken);
+        return resetPasswordToken.getToken();
     }
 }

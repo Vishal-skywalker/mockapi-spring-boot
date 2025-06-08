@@ -3,6 +3,7 @@ package com.vishal.mockapi.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,10 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.vishal.mockapi.entity.ResetPasswordToken;
 import com.vishal.mockapi.entity.Resource;
 import com.vishal.mockapi.entity.UserEntity;
+import com.vishal.mockapi.repository.ResetPasswordTokenRepo;
 import com.vishal.mockapi.repository.ResourceRepo;
 import com.vishal.mockapi.repository.UserRepo;
+import com.vishal.mockapi.service.EmailService;
 import com.vishal.mockapi.service.UserService;
 
 import jakarta.servlet.ServletException;
@@ -29,6 +33,10 @@ public class UIController {
     private UserRepo userRepo;
     @Autowired
     private ResourceRepo resourceRepo;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private ResetPasswordTokenRepo resetPasswordTokenRepo;
 
     @GetMapping("/login")
     public String login() {
@@ -136,5 +144,90 @@ public class UIController {
     @ResponseBody
     public UserService.UserValidationResult postValidateUser(@RequestBody UserEntity user) {
         return userService.validateUser(user);
+    }
+
+    @GetMapping("/forgot-password")
+    public String forgotPassword() {
+        return "forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String postForgotPassword(String email, Model model, HttpServletRequest request) {
+        List<UserEntity> users = userRepo.findByEmail(email);
+        if (users.isEmpty()) {
+            model.addAttribute("error", "User not found!");
+            return "forgot-password";
+        }
+        String token = userService.generatePasswordResetToken(users.get(0));
+        String appUrl = getAppUrl(request);
+        String resetLink = appUrl + "/reset-password?token=" + token;
+        emailService.sendSimpleMessage(email, "Password Reset Request",
+                "To reset your password, please click the link below:\n" + resetLink);
+        model.addAttribute("message", "Password reset link sent to your email.");
+        return "forgot-password";
+    }
+
+    @GetMapping("/reset-password")
+    public String resetPassword(String token, Model model) {
+        if (token == null || token.isEmpty()) {
+            model.addAttribute("error", "Invalid password reset token.");
+            return "reset-password";
+        }
+        ResetPasswordToken resetToken = resetPasswordTokenRepo.findByToken(token)
+                .orElse(null);
+        if (resetToken == null || resetToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            model.addAttribute("error", "Invalid or expired password reset token.");
+            return "reset-password";
+        }
+        model.addAttribute("email", maskEmail(resetToken.getUser().getEmail()));
+        model.addAttribute("token", token);
+        return "reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String postResetPassword(String token, String newPassword, String confirmPassword, Model model) {
+        if (token == null || token.isEmpty()) {
+            model.addAttribute("error", "Invalid password reset token.");
+            return "reset-password";
+        }
+        ResetPasswordToken resetToken = resetPasswordTokenRepo.findByToken(token)
+                .orElse(null);
+        if (resetToken == null || resetToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            model.addAttribute("error", "Invalid or expired password reset token.");
+            return "reset-password";
+        }
+        if (newPassword == null || confirmPassword == null || !newPassword.equals(confirmPassword)) {
+            model.addAttribute("error", "Passwords do not match!");
+            return "reset-password";
+        }
+        UserEntity user = resetToken.getUser();
+        userRepo.updateUserPassword(user.getId(), userService.passwordEncoder.encode(newPassword));
+        resetPasswordTokenRepo.delete(resetToken);
+        model.addAttribute("message", "Password has been successfully reset.");
+        return "login";
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return "";
+        }
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 1) {
+            return email; // No masking needed
+        }
+        String firstChar = email.substring(0, 1);
+        String lastChar = email.substring(atIndex - 1, atIndex);
+        String maskedPart = "*".repeat(Math.max(0, atIndex - 2));
+        return firstChar + maskedPart + lastChar + email.substring(atIndex);
+    }
+
+    public String getAppUrl(HttpServletRequest request) {
+        int port = request.getServerPort();
+        if ((request.getScheme().equals("http") && port == 80) ||
+                (request.getScheme().equals("https") && port == 443)) {
+            return String.format("%s://%s", request.getScheme(), request.getServerName());
+        } else {
+            return String.format("%s://%s:%d", request.getScheme(), request.getServerName(), port);
+        }
     }
 }
