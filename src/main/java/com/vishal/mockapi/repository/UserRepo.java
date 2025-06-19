@@ -2,15 +2,15 @@ package com.vishal.mockapi.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.vishal.mockapi.entity.UserEntity;
 
-public interface UserRepo extends CrudRepository<UserEntity, Long> {
+public interface UserRepo extends JpaRepository<UserEntity, Long> {
     List<UserEntity> findByEmail(String email);
 
     @Modifying

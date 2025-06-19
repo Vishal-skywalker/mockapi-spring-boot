@@ -27,6 +27,7 @@
             <div class="d-flex gap-3 justify-content-end">
                 <a href="/resource/new-api" class="btn btn-outline-primary">Create new MockAPI resource</a>
                 <a href="/change-password" class="btn btn-outline-warning">Change Password</a>
+                <a th:if="${isAdmin == true}" href="/admin" class="btn btn-outline-success">Admin Panel</a>
                 <a href="/logout" class="btn btn-outline-danger">Logout</a>
             </div>
         </div>

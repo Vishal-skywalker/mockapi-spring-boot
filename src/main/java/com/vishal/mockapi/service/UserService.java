@@ -1,6 +1,10 @@
 package com.vishal.mockapi.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,11 +26,17 @@ public class UserService {
     @Autowired
     private ResetPasswordTokenRepo resetPasswordTokenRepo;
 
+    @Value("${admin.username}")
+    private String adminUsername;
+
     public boolean registerUser(UserEntity userEntity) {
         try {
             if (!validateUser(userEntity).isError) {
                 userEntity.setRawPassword(userEntity.getPassword());
                 userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
+                if (userEntity.getEmail() != null && userEntity.getEmail().equals(adminUsername)) {
+                    userEntity.setRole("ADMIN");
+                }
                 userRepo.save(userEntity);
                 return true;
             }
@@ -79,5 +89,17 @@ public class UserService {
         resetPasswordToken.setUser(user);
         resetPasswordTokenRepo.save(resetPasswordToken);
         return resetPasswordToken.getToken();
+    }
+
+    public void makeDummyUsers() {
+        List<UserEntity> usersToInsert = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            UserEntity user = new UserEntity();
+            user.setName("User " + i);
+            user.setEmail("user" + i + "@example.com");
+            user.setPassword(passwordEncoder.encode("1234"));
+            usersToInsert.add(user);
+        }
+        userRepo.saveAll(usersToInsert);
     }
 }

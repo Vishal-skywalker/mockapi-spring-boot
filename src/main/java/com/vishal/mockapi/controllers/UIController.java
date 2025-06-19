@@ -3,7 +3,7 @@ package com.vishal.mockapi.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,14 +38,13 @@ public class UIController {
     @Autowired
     private ResetPasswordTokenRepo resetPasswordTokenRepo;
 
+    @Value("${admin.username}")
+    private String adminUsername;
+
     @GetMapping("/login")
     public String login() {
+        System.out.println("Admin Username: " + adminUsername);
         return "login";
-    }
-
-    @GetMapping("/admin")
-    public String admin() {
-        return "admin";
     }
 
     @GetMapping("/")
@@ -54,6 +53,7 @@ public class UIController {
         if (user != null) {
             model.addAttribute("username", user.getEmail());
             model.addAttribute("name", user.getName());
+            model.addAttribute("isAdmin", user.getRole().equals("ADMIN"));
             List<Resource> resources = resourceRepo.findByOwnerId(user.getId());
             model.addAttribute("resources", resources);
         }
